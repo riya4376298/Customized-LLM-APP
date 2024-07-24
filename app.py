@@ -14,7 +14,7 @@ class MyApp:
         self.documents = []
         self.embeddings = None
         self.index = None
-        self.load_pdf("THEDIA1.pdf")
+        self.load_pdf("LanguagePDF.pdf")
         self.build_vector_db()
 
     def load_pdf(self, file_path: str) -> None:
@@ -46,14 +46,14 @@ class MyApp:
 app = MyApp()
 
 def respond(
-    message: str,
-    history: List[Tuple[str, str]],
-    system_message: str,
-    max_tokens: int,
-    temperature: float,
-    top_p: float,
+    message,
+    history: list[tuple[str, str]],
+    system_message,
+    max_tokens,
+    temperature,
+    top_p,
 ):
-    system_message = "You are a knowledgeable DBT coach. You always talk about one options at at a time. you add greetings and you ask questions like real counsellor. Remember you are helpful and a good listener. You are concise and never ask multiple questions, or give long response. You response like a human counsellor accurately and correctly. consider the users as your client. and practice verbal cues only where needed. Remember you must be respectful and consider that the user may not be in a situation to deal with a wordy chatbot.  You Use DBT book to guide users through DBT exercises and provide helpful information. When needed only then you ask one follow up question at a time to guide the user to ask appropiate question. You avoid giving suggestion if any dangerous act is mentioned by the user and refer to call someone or emergency."
+    system_message = "You are a Language Learning Buddy! 🌍\n\nI'm here to assist you in learning languages. Whether you want to practice vocabulary, improve pronunciation, or learn about cultural nuances, I'm your guide. Feel free to ask me questions or start a language lesson!"
     messages = [{"role": "system", "content": system_message}]
 
     for val in history:
@@ -64,44 +64,50 @@ def respond(
 
     messages.append({"role": "user", "content": message})
 
-    # RAG - Retrieve relevant documents
-    retrieved_docs = app.search_documents(message)
-    context = "\n".join(retrieved_docs)
-    messages.append({"role": "system", "content": "Relevant documents: " + context})
-
     response = ""
+
     for message in client.chat_completion(
         messages,
-        max_tokens=100,
+        max_tokens=max_tokens,
         stream=True,
-        temperature=0.98,
-        top_p=0.7,
+        temperature=temperature,
+        top_p=top_p,
     ):
         token = message.choices[0].delta.content
+
         response += token
         yield response
+
+
 
 demo = gr.Blocks()
 
 with demo:
     gr.Markdown(
-        "‼️Disclaimer: This chatbot is based on a DBT exercise book that is publicly available. and just to test RAG implementation.‼️"
+        "‼️Disclaimer: This document is used solely for the purpose of implementing a Retrieval-Augmented Generation (RAG) chatbot.‼️"
     )
     
     chatbot = gr.ChatInterface(
         respond,
-        examples=[
-            ["I feel overwhelmed with work."],
-            ["Can you guide me through a quick meditation?"],
-            ["How do I stop worrying about things I can't control?"],
-            ["What are some DBT skills for managing anxiety?"],
-            ["Can you explain mindfulness in DBT?"],
-            ["I am interested in DBT excercises"],
-            ["I feel restless. Please help me."],
-            ["I have destructive thoughts coming to my mind repetatively."]
+       examples=[
+            ["How do you say 'hello' in Spanish? 🇪🇸"],
+            ["Can you teach me some basic French phrases? 🇫🇷"],
+            ["What are the tones in Mandarin Chinese? 🇨🇳"],
         ],
-        title='Dialectical Behaviour Therapy Assistant👩‍⚕️🧘‍♀️'
+        title='Language Learning Buddy 🌍',
+    description='''<div style="text-align: right; font-family: Arial, sans-serif; color: #333;">
+                   <h2>Welcome to the Language Learning Buddy 🌍</h2>
+                   <p style="font-size: 16px; text-align: right;">I'm here to assist you in learning languages. Whether you want to practice vocabulary, improve pronunciation, or learn about cultural nuances, I'm your guide.</p>
+                   <p style="text-align: right;"><strong>Examples:</strong></p>
+                   <ul style="list-style-type: disc; margin-left: 20px; text-align: right;">
+                       <li style="font-size: 14px;">How do you say 'hello' in Spanish? 🇪🇸</li>
+                       <li style="font-size: 14px;">Can you teach me some basic French phrases? 🇫🇷</li>
+                       <li style="font-size: 14px;">What are the tones in Mandarin Chinese? 🇨🇳</li>
+                   </ul>
+                   </div>''',
     )
+
+
 
 if __name__ == "__main__":
     demo.launch()
